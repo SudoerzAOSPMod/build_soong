@@ -55,6 +55,13 @@ type smartStatusOutput struct {
 	sigwinchHandled chan bool
 }
 
+	
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
 // NewSmartStatusOutput returns a StatusOutput that represents the
 // current build status similarly to Ninja's built-in terminal
 // output.
@@ -128,6 +135,9 @@ func (s *smartStatusOutput) StartAction(action *status.Action, counts status.Cou
 	}
 
 	progress := s.formatter.progress(counts)
+	
+	color := "\x1b[34m"
+	color2 := "\x1b[33m"
 
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -137,7 +147,19 @@ func (s *smartStatusOutput) StartAction(action *status.Action, counts status.Cou
 		startTime: startTime,
 	})
 
-	s.statusLine(progress + str)
+	s.statusLine(color + progress + color2 + str)
+	
+	fileName := "/media/aosp/aosp12_mod" + "/monitor/progress_now"
+	monstr := progress + str
+
+	file,err := os.OpenFile(fileName,os.O_EXCL | os.O_TRUNC | os.O_WRONLY,0777)
+	check(err)
+	if monstr == "" {
+		io.WriteString(file,"")
+	} else {
+		io.WriteString(file,monstr)
+	}
+	defer file.Close()
 }
 
 func (s *smartStatusOutput) FinishAction(result status.ActionResult, counts status.Counts) {
@@ -145,8 +167,11 @@ func (s *smartStatusOutput) FinishAction(result status.ActionResult, counts stat
 	if str == "" {
 		str = result.Command
 	}
+	
+	color := "\x1b[34m"
+	color2 := "\x1b[33m"
 
-	progress := s.formatter.progress(counts) + str
+	progress := color + s.formatter.progress(counts) + color2 + str
 
 	output := s.formatter.result(result)
 
@@ -159,6 +184,18 @@ func (s *smartStatusOutput) FinishAction(result status.ActionResult, counts stat
 			break
 		}
 	}
+	
+	fileName := "/media/aosp/aosp12_mod" + "/monitor/progress_now"
+	monstr2 := s.formatter.progress(counts) + str
+
+	file,err := os.OpenFile(fileName,os.O_EXCL | os.O_TRUNC | os.O_WRONLY,0777)
+	check(err)
+	if monstr2 == "" {
+		io.WriteString(file,"")
+	} else {
+		io.WriteString(file,monstr2)
+	}
+	defer file.Close()
 
 	if output != "" {
 		s.statusLine(progress)
@@ -254,7 +291,7 @@ func elide(str string, width int) string {
 }
 
 func (s *smartStatusOutput) startActionTableTick() {
-	s.ticker = time.NewTicker(time.Second)
+	s.ticker = time.NewTicker(time.Millisecond)
 	go func() {
 		for {
 			select {
@@ -353,7 +390,7 @@ func (s *smartStatusOutput) actionTable() {
 		if tableLine < len(s.runningActions) {
 			runningAction := s.runningActions[tableLine]
 
-			seconds := int(time.Since(runningAction.startTime).Round(time.Second).Seconds())
+			seconds := int(time.Since(runningAction.startTime).Round(time.Millisecond).Milliseconds())
 
 			desc := runningAction.action.Description
 			if desc == "" {
@@ -361,13 +398,13 @@ func (s *smartStatusOutput) actionTable() {
 			}
 
 			color := ""
-			if seconds >= 60 {
+			if seconds >= 60000 {
 				color = ansi.red() + ansi.bold()
-			} else if seconds >= 30 {
+			} else if seconds >= 30000 {
 				color = ansi.yellow() + ansi.bold()
 			}
 
-			durationStr := fmt.Sprintf("   %2d:%02d ", seconds/60, seconds%60)
+			durationStr := fmt.Sprintf("   %2d:%02d.%03d ", (seconds/1000)/60, (seconds/1000)%60, seconds%1000)
 			desc = elide(desc, s.termWidth-len(durationStr))
 			durationStr = color + durationStr + ansi.regular()
 			fmt.Fprint(s.writer, durationStr, desc)

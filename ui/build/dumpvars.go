@@ -139,7 +139,7 @@ func dumpMakeVars(ctx Context, config Config, goals, vars []string, write_soong_
 var BannerVars = []string{
 	"PLATFORM_VERSION_CODENAME",
 	"PLATFORM_VERSION",
-        "TARGET_SUDOERZ_MOD_VER",
+	"TARGET_SUDOERZ_MOD_VER",
 	"SUDOERZ_VERSION",
 	"TARGET_PRODUCT",
 	"TARGET_BUILD_VARIANT",
@@ -167,7 +167,21 @@ func Banner(make_vars map[string]string) string {
 	fmt.Fprintln(b, "===D===U===M===P===V===A===R===S===")
 	for _, name := range BannerVars {
 		if make_vars[name] != "" {
-			fmt.Fprintf(b, "%s=%s\n", name, make_vars[name])
+			if name == "TARGET_SUDOERZ_MOD_VER" {
+				fmt.Fprintf(b, "\x1b[1;32m%s=\x1b[0m\x1b[1;42m%s\x1b[0m\n", name, make_vars[name])
+			} else if name == "SUDOERZ_VERSION" {
+				fmt.Fprintf(b, "\x1b[1;32m%s=\x1b[0m\x1b[1;42m%s\x1b[0m\n", name, make_vars[name])
+			} else if name == "TARGET_PRODUCT" {
+				fmt.Fprintf(b, "\x1b[1;33m%s=\x1b[0m\x1b[1;30m\x1b[1;43m%s\x1b[0m\n", name, make_vars[name])
+			} else if name == "TARGET_BUILD_VARIANT" {
+				fmt.Fprintf(b, "\x1b[1;31m%s=\x1b[0m\x1b[1;41m%s\x1b[0m\n", name, make_vars[name])
+			} else if name == "BUILD_ID" {
+				fmt.Fprintf(b, "\x1b[1;33m%s=\x1b[0m\x1b[1;30m\x1b[1;43m%s\x1b[0m\n", name, make_vars[name])
+			} else if name == "PRODUCT_SOONG_NAMESPACES" {
+				fmt.Fprintf(b, "\x1b[1;31m%s=\x1b[0m\x1b[1;41m%s\x1b[0m\n", name, make_vars[name])
+			} else {
+				fmt.Fprintf(b, "%s=%s\n", name, make_vars[name])
+			}
 		}
 	}
 	fmt.Fprint(b, "===D===U===M===P===V===A===R===S===")

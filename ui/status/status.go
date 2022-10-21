@@ -19,6 +19,8 @@ package status
 
 import (
 	"sync"
+	"io"
+	"os"
 )
 
 // Action describes an action taken (or as Ninja calls them, Edges).
@@ -168,6 +170,12 @@ const (
 	ErrorLvl
 )
 
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
 func (l MsgLevel) Prefix() string {
 	switch l {
 	case VerboseLvl:
@@ -292,9 +300,19 @@ func (s *Status) finishAction(result ActionResult) {
 func (s *Status) message(level MsgLevel, msg string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	fileName := "/media/aosp/aosp12_mod" + "/monitor/build_message"
 
 	for _, o := range s.outputs {
 		o.Message(level, msg)
+		msgstr := msg
+		file,err := os.OpenFile(fileName,os.O_EXCL | os.O_TRUNC | os.O_WRONLY,0777)
+		check(err)
+		if msgstr == "" {
+			io.WriteString(file,"")
+		} else {
+			io.WriteString(file,msgstr)
+		}
+		defer file.Close()
 	}
 }
 
