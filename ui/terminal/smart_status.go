@@ -382,7 +382,7 @@ func (s *smartStatusOutput) actionTable() {
 				color = ansi.yellow() + ansi.bold()
 			}
 
-			durationStr := fmt.Sprintf(" %2d:%02d.%03d ", (seconds/1000)/60, (seconds/1000)%60, seconds%1000)
+			durationStr := fmt.Sprintf("   %2d:%02d.%03d ", (seconds/1000)/60, (seconds/1000)%60, seconds%1000)
 			desc = elide(desc, s.termWidth-len(durationStr))
 			durationStr = color + durationStr + ansi.regular()
 			fmt.Fprint(s.writer, durationStr, desc)
