@@ -538,10 +538,8 @@ var (
 		"tools/asuite/atest":/* recursive = */ false,
 		"tools/asuite/atest/bazel/reporter":/* recursive = */ true,
 
-		// Used for testing purposes only. Should not actually exist in the real source tree.
-		"testpkg/keep_build_file":/* recursive = */ false,
-
-		"vendor/lineage-priv/keys":/* recursive = */ false,
+		// TODO(b/266459895): remove this and the placeholder BUILD file after re-enabling libunwindstack
+		"external/rust/crates/rustc-demangle-capi":/* recursive = */ false,
 	}
 
 	Bp2buildModuleAlwaysConvertList = []string{
