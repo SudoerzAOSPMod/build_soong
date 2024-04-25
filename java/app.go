@@ -561,9 +561,6 @@ func (a *AndroidApp) installPath(ctx android.ModuleContext) android.InstallPath 
 	if ctx.ModuleName() == "framework-res" {
 		// framework-res.apk is installed as system/framework/framework-res.apk
 		installDir = "framework"
-	} else if ctx.ModuleName() == "org.lineageos.platform-res" {
-		// org.lineageos.platform-res.apk is installed as system/framework/org.lineageos.platform-res.apk
-		installDir = "framework"
 	} else if a.Privileged() {
 		installDir = filepath.Join("priv-app", a.installApkName)
 	} else {
@@ -586,37 +583,8 @@ func (a *AndroidApp) dexBuildActions(ctx android.ModuleContext) (android.Path, a
 	a.dexpreopter.manifestFile = a.mergedManifestFile
 	a.dexpreopter.preventInstall = a.appProperties.PreventInstall
 
-	var packageResources = a.exportPackage
-
-	if ctx.ModuleName() != "framework-res" && ctx.ModuleName() != "org.lineageos.platform-res" {
-		if Bool(a.dexProperties.Optimize.Shrink_resources) {
-			protoFile := android.PathForModuleOut(ctx, packageResources.Base()+".proto.apk")
-			aapt2Convert(ctx, protoFile, packageResources, "proto")
-			a.dexer.resourcesInput = android.OptionalPathForPath(protoFile)
-		}
-
-		var extraSrcJars android.Paths
-		var extraClasspathJars android.Paths
-		var extraCombinedJars android.Paths
-		if a.useResourceProcessorBusyBox() {
-			// When building an app with ResourceProcessorBusyBox enabled ResourceProcessorBusyBox has already
-			// created R.class files that provide IDs for resources in busybox/R.jar.  Pass that file in the
-			// classpath when compiling everything else, and add it to the final classes jar.
-			extraClasspathJars = android.Paths{a.aapt.rJar}
-			extraCombinedJars = android.Paths{a.aapt.rJar}
-		} else {
-			// When building an app without ResourceProcessorBusyBox the aapt2 rule creates R.srcjar containing
-			// R.java files for the app's package and the packages from all transitive static android_library
-			// dependencies.  Compile the srcjar alongside the rest of the sources.
-			extraSrcJars = android.Paths{a.aapt.aaptSrcJar}
-		}
-
-		a.Module.compile(ctx, extraSrcJars, extraClasspathJars, extraCombinedJars)
-		if Bool(a.dexProperties.Optimize.Shrink_resources) {
-			binaryResources := android.PathForModuleOut(ctx, packageResources.Base()+".binary.out.apk")
-			aapt2Convert(ctx, binaryResources, a.dexer.resourcesOutput.Path(), "binary")
-			packageResources = binaryResources
-		}
+	if ctx.ModuleName() != "framework-res" {
+		a.Module.compile(ctx, a.aaptSrcJar)
 	}
 
 	return a.dexJarFile.PathOrNil(), packageResources
@@ -775,9 +743,6 @@ func (a *AndroidApp) generateAndroidBuildActions(ctx android.ModuleContext) {
 
 	if ctx.ModuleName() == "framework-res" {
 		// framework-res.apk is installed as system/framework/framework-res.apk
-		a.installDir = android.PathForModuleInstall(ctx, "framework")
-	} else if ctx.ModuleName() == "org.lineageos.platform-res" {
-		// org.lineageos.platform-res.apk is installed as system/framework/org.lineageos.platform-res.apk
 		a.installDir = android.PathForModuleInstall(ctx, "framework")
 	} else if a.Privileged() {
 		a.installDir = android.PathForModuleInstall(ctx, "priv-app", a.installApkName)
