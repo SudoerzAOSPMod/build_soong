@@ -451,6 +451,10 @@ func (ansiImpl) yellow() string {
 	return "\x1b[33m"
 }
 
+func (ansiImpl) green() string {
+	return "\x1b[32m"
+}
+
 func (ansiImpl) bold() string {
 	return "\x1b[1m"
 }

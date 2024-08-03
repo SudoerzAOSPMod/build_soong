@@ -577,6 +577,8 @@ func (a *AndroidApp) dexBuildActions(ctx android.ModuleContext) (android.Path, a
 	a.dexpreopter.manifestFile = a.mergedManifestFile
 	a.dexpreopter.preventInstall = a.appProperties.PreventInstall
 
+	var packageResources = a.exportPackage
+
 	if ctx.ModuleName() != "framework-res" {
 		if Bool(a.dexProperties.Optimize.Shrink_resources) {
 			protoFile := android.PathForModuleOut(ctx, packageResources.Base()+".proto.apk")
